@@ -95,6 +95,24 @@ Radio::detect(const USBDeviceDescriptor &descr, const RadioInfo &force, const Er
       return nullptr;
     }
     anytone->deleteLater();
+  } else if (AnytoneDeltaMMInterface::interfaceInfo() == descr) {
+    auto anytone = new AnytoneDeltaMMInterface(descr, err);
+    if (anytone->isOpen()) {
+      RadioInfo id = anytone->identifier(err);
+      if ((id.isValid() && (RadioInfo::D878UVII == id.id())) || (force.isValid() && (RadioInfo::D878UVII == force.id()))) {
+        return new D878UV2(anytone);
+      } if (id.isValid()) {
+        errMsg(err) << tr("Unhandled device %1 '%2'. Device known but not implemented yet.")
+                       .arg(id.manufacturer())
+                       .arg(id.name());
+      } else {
+        errMsg(err) << tr("Cannot identify the DeltaMM radio.");
+      }
+      anytone->close();
+      anytone->deleteLater();
+      return nullptr;
+    }
+    anytone->deleteLater();
   } else if (AnytoneSTM32Interface::interfaceInfo() == descr) {
     auto anytone = new AnytoneSTM32Interface(descr, err);
     if (anytone->isOpen()) {

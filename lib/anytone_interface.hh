@@ -186,4 +186,32 @@ public:
   static QList<USBDeviceDescriptor> detect(bool saveOnly=true);
 };
 
+
+/** Implements the interface to AnyTone radios running the DeltaMM firmware.
+ *
+ * DeltaMM answers the AnyTone programming protocol on its data port. It uses its own USB VID/PID
+ * (@c 0x1209 / @c 0x0001, the pid.codes test pair during development) and shows up as two serial
+ * ports, the data port and a log port; only the data port is used.
+ *
+ * @ingroup anytone */
+class AnytoneDeltaMMInterface: public AnytoneInterface
+{
+  Q_OBJECT
+
+public:
+  /** Constructs a new interface to a DeltaMM radio. If a matching device was found, @c isOpen
+   * returns @c true. */
+  explicit AnytoneDeltaMMInterface(const USBDeviceDescriptor &descriptor,
+                                   const ErrorStack &err=ErrorStack(), QObject *parent=nullptr);
+
+  /** Returns an identifier of the radio. */
+  RadioInfo identifier(const ErrorStack &err=ErrorStack());
+
+public:
+  /** Returns some information about this interface. */
+  static USBDeviceInfo interfaceInfo();
+  /** Tries to find the data ports of all connected DeltaMM radios. */
+  static QList<USBDeviceDescriptor> detect(bool saveOnly=true);
+};
+
 #endif // ANYTONEINTERFACE_HH
