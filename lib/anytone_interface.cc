@@ -1,10 +1,13 @@
 #include "anytone_interface.hh"
 #include "logger.hh"
 #include <QtEndian>
+#include <QFile>
 
 #define USB_VID_GD32  0x28e9
 #define USB_PID_GD32  0x018a
 #define USB_VID_STM32 0x2e3c
+#define USB_VID_DELTAMM 0x1209
+#define USB_PID_DELTAMM 0x0001
 #define USB_PID_STM32 0x5740
 
 /* ********************************************************************************************* *
@@ -452,4 +455,45 @@ QList<USBDeviceDescriptor>
 AnytoneSTM32Interface::detect(bool saveOnly) {
   Q_UNUSED(saveOnly);
   return USBSerial::detect(USB_VID_STM32, USB_PID_STM32, true);
+}
+
+
+
+/* ********************************************************************************************* *
+ * Implementation of AnytoneDeltaMMInterface
+ * ********************************************************************************************* */
+AnytoneDeltaMMInterface::AnytoneDeltaMMInterface(const USBDeviceDescriptor &descriptor, const ErrorStack &err, QObject *parent)
+  : AnytoneInterface(descriptor, err, parent)
+{
+  // pass...
+}
+
+RadioInfo
+AnytoneDeltaMMInterface::identifier(const ErrorStack &err) {
+  if (! _info.isValid())
+    return RadioInfo();
+  if ("D878UV2" == _info.name)
+    return RadioInfo::byID(RadioInfo::D878UVII);
+
+  errMsg(err) << tr("Unsupported DeltaMM radio '%1', HW rev. '%2'.")
+                 .arg(_info.name).arg(_info.version);
+  return RadioInfo();
+}
+
+USBDeviceInfo
+AnytoneDeltaMMInterface::interfaceInfo() {
+  return USBDeviceInfo(USBDeviceInfo::Class::Serial, USB_VID_DELTAMM, USB_PID_DELTAMM);
+}
+
+QList<USBDeviceDescriptor>
+AnytoneDeltaMMInterface::detect(bool saveOnly) {
+  Q_UNUSED(saveOnly);
+  QList<USBDeviceDescriptor> ports = USBSerial::detect(USB_VID_DELTAMM, USB_PID_DELTAMM, true), data;
+  foreach (USBDeviceDescriptor port, ports) {
+    // On Linux, the USB interface's name tells the data port from the log port.
+    QFile name(QString("/sys/class/tty/%1/device/interface").arg(port.device().toString()));
+    if ((! name.open(QIODevice::ReadOnly)) || QString::fromUtf8(name.readAll()).trimmed() == "DeltaMM data")
+      data.append(port);
+  }
+  return data;
 }
