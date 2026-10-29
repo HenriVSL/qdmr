@@ -1,0 +1,161 @@
+name: release
+
+on:
+  push:
+    tags: [ "v*" ]
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  flatpak:
+    name: Linux (Flatpak)
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:kde-6.9
+      options: --privileged
+    steps:
+    - uses: actions/checkout@v4
+    - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+      with:
+        bundle: qdmr.flatpak
+        manifest-path: de.darc.dm3mat.qdmr.yaml
+        cache-key: flatpak-builder-${{ github.sha }}
+        upload-artifact: false
+    - name: Rename bundle
+      run: mv qdmr.flatpak qdmr-${{ github.ref_name }}-x86_64.flatpak
+    - uses: actions/upload-artifact@v4
+      with:
+        name: linux-flatpak
+        path: qdmr-*.flatpak
+
+  appimage:
+    name: Linux (AppImage)
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y qt6-tools-dev qt6-base-dev qt6-base-dev-tools qt6-serialport-dev \
+          qt6-positioning-dev qt6-multimedia-dev qt6-l10n-tools qt6-qpa-plugins libusb-1.0-0-dev \
+          libyaml-cpp-dev librsvg2-bin ninja-build libfuse2
+    - name: Configure
+      run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCMAKE_INSTALL_PREFIX=/usr -DINSTALL_UDEV_RULES=OFF
+    - name: Build
+      run: cmake --build build
+    - name: Install into AppDir
+      run: DESTDIR=$PWD/AppDir cmake --install build
+    - name: Create AppImage
+      run: |
+        wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+        wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+        chmod +x linuxdeploy-*.AppImage
+        export QMAKE=/usr/lib/qt6/bin/qmake
+        export EXTRA_PLATFORM_PLUGINS="libqwayland-generic.so"
+        export LDAI_OUTPUT=qdmr-${{ github.ref_name }}-x86_64.AppImage
+        ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt --output appimage \
+          --desktop-file AppDir/usr/share/applications/qdmr.desktop \
+          --executable AppDir/usr/bin/dmrconf
+    - uses: actions/upload-artifact@v4
+      with:
+        name: linux-appimage
+        path: qdmr-*.AppImage
+
+  windows:
+    name: Windows (x86_64)
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: UCRT64
+        update: true
+        install: zip
+        pacboy: >-
+          toolchain:p cmake:p ninja:p qt6-base:p qt6-tools:p qt6-serialport:p
+          qt6-positioning:p qt6-multimedia:p qt6-svg:p qt6-translations:p
+          yaml-cpp:p libusb:p librsvg:p
+    - name: Configure
+      run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DINSTALL_UDEV_RULES=OFF -DINSTALL_APPSTREAM_DATA=OFF
+    - name: Build
+      run: cmake --build build
+    - name: Package
+      run: |
+        DIST=qdmr-${{ github.ref_name }}-windows-x86_64
+        mkdir -p $DIST
+        cp build/src/qdmr.exe build/cli/dmrconf.exe $DIST/
+        find build/lib -maxdepth 1 -name '*.dll' -exec cp {} $DIST/ \;
+        windeployqt6 --release --no-compiler-runtime $DIST/qdmr.exe $DIST/dmrconf.exe
+        # Pull in all remaining MinGW DLL dependencies (compiler runtime, yaml-cpp, libusb, ...)
+        while true; do
+          NEW=$(find $DIST -name '*.exe' -o -name '*.dll' | xargs ldd 2>/dev/null \
+                | grep -i '/ucrt64/' | awk '{print $3}' | sort -u \
+                | while read dll; do [ -e "$DIST/$(basename $dll)" ] || echo $dll; done)
+          [ -z "$NEW" ] && break
+          for dll in $NEW; do cp "$dll" $DIST/; done
+        done
+        cp LICENSE $DIST/LICENSE.txt
+        zip -r $DIST.zip $DIST
+    - uses: actions/upload-artifact@v4
+      with:
+        name: windows
+        path: qdmr-*.zip
+
+  macos:
+    name: macOS (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-latest
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: brew install qt@6 yaml-cpp librsvg libusb ninja
+    - name: Configure
+      run: |
+        cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+          -DQt6_ROOT=$(brew --prefix qt@6) -DINSTALL_BUNDLE=ON \
+          -DINSTALL_UDEV_RULES=OFF -DINSTALL_APPSTREAM_DATA=OFF
+    - name: Build
+      run: cmake --build build
+    - name: Package
+      run: |
+        APP=build/src/qdmr.app
+        cp build/cli/dmrconf $APP/Contents/MacOS/
+        DMG=qdmr-${{ github.ref_name }}-macos-${{ matrix.arch }}
+        $(brew --prefix qt@6)/bin/macdeployqt $APP \
+          -executable=$APP/Contents/MacOS/dmrconf -libpath=$PWD/build/lib
+        codesign --force --deep --sign - $APP
+        mkdir dmg && cp -R $APP dmg/ && ln -s /Applications dmg/Applications
+        hdiutil create -volname qdmr -srcfolder dmg -ov -format UDZO $DMG.dmg
+    - uses: actions/upload-artifact@v4
+      with:
+        name: macos-${{ matrix.arch }}
+        path: qdmr-*.dmg
+
+  release:
+    name: Publish release
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [ flatpak, appimage, windows, macos ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+        merge-multiple: true
+    - uses: softprops/action-gh-release@v2
+      with:
+        files: artifacts/*
+        generate_release_notes: true
