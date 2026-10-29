@@ -2,6 +2,7 @@ name: release
 
 on:
   push:
+    branches: [ "deltamm*" ]
     tags: [ "v*" ]
   workflow_dispatch:
 
