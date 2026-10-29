@@ -82,7 +82,7 @@ jobs:
           qt6-positioning:p qt6-multimedia:p qt6-svg:p qt6-translations:p
           yaml-cpp:p libusb:p librsvg:p
     - name: Configure
-      run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DINSTALL_UDEV_RULES=OFF -DINSTALL_APPSTREAM_DATA=OFF
+      run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DINSTALL_UDEV_RULES=OFF -DINSTALL_APPSTREAM_DATA=OFF -DCMAKE_CXX_FLAGS=-DNOGDI
     - name: Build
       run: cmake --build build
     - name: Package
@@ -126,7 +126,7 @@ jobs:
       run: |
         cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
           -DQt6_ROOT=$(brew --prefix qt@6) -DINSTALL_BUNDLE=ON \
-          -DINSTALL_UDEV_RULES=OFF -DINSTALL_APPSTREAM_DATA=OFF
+          -DINSTALL_UDEV_RULES=OFF -DINSTALL_APPSTREAM_DATA=OFF -DCMAKE_CXX_FLAGS=-DNOGDI
     - name: Build
       run: cmake --build build
     - name: Package
