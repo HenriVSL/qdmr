@@ -43,6 +43,7 @@ private slots:
   void testFixedLocation();
   void testHiddenZone(); ///< Regression test for #203
 
+  void testChannelRoamingFlag();
 protected:
   Config _micGainConfig;
   QTextStream _stderr;
