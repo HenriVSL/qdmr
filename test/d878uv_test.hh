@@ -44,6 +44,7 @@ private slots:
   void testHiddenZone(); ///< Regression test for #203
 
   void testChannelRoamingFlag();
+  void testSettingsAutoRoam();
 protected:
   Config _micGainConfig;
   QTextStream _stderr;
