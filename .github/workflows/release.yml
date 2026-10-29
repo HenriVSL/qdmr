@@ -89,8 +89,7 @@ jobs:
       run: |
         DIST=qdmr-${{ github.ref_name }}-windows-x86_64
         mkdir -p $DIST
-        cp build/src/qdmr.exe build/cli/dmrconf.exe $DIST/
-        find build/lib -maxdepth 1 -name '*.dll' -exec cp {} $DIST/ \;
+        cp build/qdmr.exe build/dmrconf.exe build/dmrconf.dll $DIST/
         windeployqt6 --release --no-compiler-runtime $DIST/qdmr.exe $DIST/dmrconf.exe
         # Pull in all remaining MinGW DLL dependencies (compiler runtime, yaml-cpp, libusb, ...)
         while true; do
@@ -126,7 +125,7 @@ jobs:
       run: |
         cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
           -DQt6_ROOT=$(brew --prefix qt@6) -DINSTALL_BUNDLE=ON \
-          -DINSTALL_UDEV_RULES=OFF -DINSTALL_APPSTREAM_DATA=OFF -DCMAKE_CXX_FLAGS=-DNOGDI
+          -DINSTALL_UDEV_RULES=OFF -DINSTALL_APPSTREAM_DATA=OFF
     - name: Build
       run: cmake --build build
     - name: Package
