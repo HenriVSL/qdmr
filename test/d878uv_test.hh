@@ -45,6 +45,7 @@ private slots:
 
   void testChannelRoamingFlag();
   void testSettingsAutoRoam();
+  void testAPRSTXDCS();
 protected:
   Config _micGainConfig;
   QTextStream _stderr;
