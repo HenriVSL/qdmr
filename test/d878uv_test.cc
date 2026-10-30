@@ -706,5 +706,21 @@ D878UVTest::testAPRSTXDCS() {
   QCOMPARE(aprs.txTone(), SelectiveCall(23, true));
 }
 
+void
+D878UVTest::testGPSTimeZoneFallback() {
+  ErrorStack err;
+  Config decoded, config;
+  if (! config.readYAML(":/data/roaming_channel_test.yaml", err)) {
+    QFAIL(QString("Cannot open codeplug file: %1")
+            .arg(err.format()).toStdString().c_str());
+  }
+
+  config.settings()->setAnytoneExtension(new AnytoneSettingsExtension());
+  // UTC+05:45 is not in the radio's table of time zones, falls back to UTC
+  config.settings()->anytoneExtension()->gpsSettings()->setTimeZone(QTimeZone(20700));
+  encodeDecode(config, decoded);
+  QCOMPARE(decoded.settings()->anytoneExtension()->gpsSettings()->timeZone(), QTimeZone(0));
+}
+
 QTEST_GUILESS_MAIN(D878UVTest)
 

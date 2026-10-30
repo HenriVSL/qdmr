@@ -1000,7 +1000,7 @@ D878UVCodeplug::GeneralSettingsElement::TimeZone::decode(uint8_t code) {
 uint8_t
 D878UVCodeplug::GeneralSettingsElement::TimeZone::encode(const QTimeZone &zone) {
   if (! _timeZones.contains(zone))
-    return 13; //<- UTC
+    return _timeZones.indexOf(QTimeZone(0)); //<- UTC
   return _timeZones.indexOf(zone);
 }
 
