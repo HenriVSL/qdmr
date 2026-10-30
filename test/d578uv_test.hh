@@ -24,6 +24,7 @@ private slots:
   void testSettingsAutoRoam();
   void testIdleToneEnable(); // Regression test for #911
 
+  void testGPSTimeZoneByOffset();
 protected:
   void encodeDecode(Config &input, Config &ouput);
 };
