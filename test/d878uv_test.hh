@@ -47,6 +47,7 @@ private slots:
   void testSettingsAutoRoam();
   void testAPRSTXDCS();
   void testGPSTimeZoneFallback();
+  void testSettingsAudioPowerSave();
 protected:
   Config _micGainConfig;
   QTextStream _stderr;
