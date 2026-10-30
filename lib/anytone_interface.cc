@@ -10,6 +10,16 @@
 #define USB_PID_DELTAMM 0x0001
 #define USB_PID_STM32 0x5740
 
+/** Returns the name of the USB interface behind the given serial port. Only available on Linux,
+ * returns an empty string elsewhere. DeltaMM names its data and log ports this way. */
+static QString
+usbInterfaceName(const USBDeviceDescriptor &port) {
+  QFile name(QString("/sys/class/tty/%1/device/interface").arg(port.device().toString()));
+  if (! name.open(QIODevice::ReadOnly))
+    return QString();
+  return QString::fromUtf8(name.readAll()).trimmed();
+}
+
 /* ********************************************************************************************* *
  * Implementation of AnytoneInterface::ReadRequest
  * ********************************************************************************************* */
@@ -414,7 +424,13 @@ AnytoneGD32Interface::interfaceInfo() {
 QList<USBDeviceDescriptor>
 AnytoneGD32Interface::detect(bool saveOnly) {
   Q_UNUSED(saveOnly);
-  return USBSerial::detect(USB_VID_GD32, USB_PID_GD32, true);
+  QList<USBDeviceDescriptor> ports = USBSerial::detect(USB_VID_GD32, USB_PID_GD32, true), data;
+  foreach (USBDeviceDescriptor port, ports) {
+    // DeltaMM uses the factory VID/PID too, but adds a log port that does not talk the protocol.
+    if ("DeltaMM log" != usbInterfaceName(port))
+      data.append(port);
+  }
+  return data;
 }
 
 
@@ -491,8 +507,8 @@ AnytoneDeltaMMInterface::detect(bool saveOnly) {
   QList<USBDeviceDescriptor> ports = USBSerial::detect(USB_VID_DELTAMM, USB_PID_DELTAMM, true), data;
   foreach (USBDeviceDescriptor port, ports) {
     // On Linux, the USB interface's name tells the data port from the log port.
-    QFile name(QString("/sys/class/tty/%1/device/interface").arg(port.device().toString()));
-    if ((! name.open(QIODevice::ReadOnly)) || QString::fromUtf8(name.readAll()).trimmed() == "DeltaMM data")
+    QString name = usbInterfaceName(port);
+    if (name.isEmpty() || ("DeltaMM data" == name))
       data.append(port);
   }
   return data;

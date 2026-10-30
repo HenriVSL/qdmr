@@ -189,9 +189,10 @@ public:
 
 /** Implements the interface to AnyTone radios running the DeltaMM firmware.
  *
- * DeltaMM answers the AnyTone programming protocol on its data port. It uses its own USB VID/PID
- * (@c 0x1209 / @c 0x0001, the pid.codes test pair during development) and shows up as two serial
- * ports, the data port and a log port; only the data port is used.
+ * DeltaMM answers the AnyTone programming protocol on its data port and shows up as two serial
+ * ports, the data port and a log port; only the data port is used. Current DeltaMM builds use the
+ * factory VID/PID and are handled by @c AnytoneGD32Interface. This interface covers older builds,
+ * which used the pid.codes test pair @c 0x1209 / @c 0x0001.
  *
  * @ingroup anytone */
 class AnytoneDeltaMMInterface: public AnytoneInterface
