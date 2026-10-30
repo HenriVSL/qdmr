@@ -44,6 +44,7 @@ private slots:
   void testHiddenZone(); ///< Regression test for #203
   void testCustomCTCSS(); ///< Regression test fpr #1004
   void testGPSTimeZoneFallback();
+  void testGPSTimeZoneByOffset();
 
 protected:
   Config _micGainConfig;
