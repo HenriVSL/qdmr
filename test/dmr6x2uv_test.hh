@@ -27,6 +27,7 @@ private slots:
 
   void testHiddenZone(); ///< Regression test for #939
   void testRXBacklightDuration();
+  void testAPRSPeriodOff();
 };
 
 #endif // DMR6X2UVTEST_HH

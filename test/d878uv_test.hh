@@ -50,6 +50,7 @@ private slots:
   void testSettingsAudioPowerSave();
   void testGPSTimeZoneByOffset();
   void testRXBacklightDuration();
+  void testAPRSPeriodOff();
 protected:
   Config _micGainConfig;
   QTextStream _stderr;
