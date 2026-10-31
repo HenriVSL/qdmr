@@ -51,6 +51,7 @@ private slots:
   void testGPSTimeZoneByOffset();
   void testRXBacklightDuration();
   void testAPRSPeriodOff();
+  void testMelodyDuration();
 protected:
   Config _micGainConfig;
   QTextStream _stderr;
