@@ -52,6 +52,7 @@ private slots:
   void testRXBacklightDuration();
   void testAPRSPeriodOff();
   void testMelodyDuration();
+  void testChannelNoContact();
 protected:
   Config _micGainConfig;
   QTextStream _stderr;

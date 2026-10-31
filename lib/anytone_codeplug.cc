@@ -398,6 +398,10 @@ AnytoneCodeplug::ChannelElement::setTwoToneDecodeIndex(unsigned idx) {
   setUInt16_le(Offset::twoFunctionIndex(), idx);
 }
 
+bool
+AnytoneCodeplug::ChannelElement::hasContactIndex() const {
+  return 0xffffffff != contactIndex();
+}
 unsigned
 AnytoneCodeplug::ChannelElement::contactIndex() const {
   return getUInt32_le(Offset::contactIndex());
@@ -405,6 +409,10 @@ AnytoneCodeplug::ChannelElement::contactIndex() const {
 void
 AnytoneCodeplug::ChannelElement::setContactIndex(unsigned idx) {
   return setUInt32_le(Offset::contactIndex(), idx);
+}
+void
+AnytoneCodeplug::ChannelElement::clearContactIndex() {
+  setContactIndex(0xffffffff);
 }
 
 unsigned
@@ -666,13 +674,15 @@ AnytoneCodeplug::ChannelElement::linkChannelObj(Channel *c, Context &ctx) const 
     if (nullptr == dc)
       return false;
 
-    // Check if default contact is set, in fact a valid contact index is mandatory.
-    if (! ctx.has<DMRContact>(contactIndex())) {
-      logError() << "Cannot resolve contact index " << contactIndex() << " for channel '"
-                 << c->name() << "'.";
-      return false;
+    // Link transmit contact, if set
+    if (hasContactIndex()) {
+      if (! ctx.has<DMRContact>(contactIndex())) {
+        logError() << "Cannot resolve contact index " << contactIndex() << " for channel '"
+                   << c->name() << "'.";
+        return false;
+      }
+      dc->setContact(ctx.get<DMRContact>(contactIndex()));
     }
-    dc->setContact(ctx.get<DMRContact>(contactIndex()));
 
     // Set if RX group list is set
     if (hasGroupListIndex() && ctx.has<RXGroupList>(groupListIndex()))
@@ -770,7 +780,7 @@ AnytoneCodeplug::ChannelElement::fromChannelObj(const Channel *c, Context &ctx) 
     setTimeSlot(dc->timeSlot());
     // link transmit contact
     if (nullptr == dc->contact())
-      setContactIndex(0);
+      clearContactIndex();
     else
       setContactIndex(ctx.index(dc->contact()));
     // link RX group list
