@@ -71,7 +71,7 @@ D878UVTest::testAnalogMicGain() {
   Config config;
   encodeDecode(_micGainConfig, config);
   QVERIFY(config.settings()->audio()->fmMicGainEnabled());
-  QCOMPARE(config.settings()->audio()->fmMicGain(), Level::fromValue(5));
+  QCOMPARE(config.settings()->audio()->fmMicGain(), Level::fromValue(6));
 }
 
 void
@@ -593,7 +593,7 @@ void
 D878UVTest::testMicGain() {
   ErrorStack err;
   Config copy, config; config.copy(_basicConfig);
-  QList<QPair<unsigned int,unsigned int>> pairs = {{1,1}, {2,1}, {3,1}, {4,3}, {5,3}, {6,5}, {7,5}, {8,7}, {9,7}, {10,10}};
+  QList<QPair<unsigned int,unsigned int>> pairs = {{1,1}, {2,1}, {3,1}, {4,4}, {5,4}, {6,6}, {7,6}, {8,8}, {9,8}, {10,10}};
   for (auto pair: pairs) {
     config.settings()->audio()->setMicGain(Level::fromValue(pair.first));
     encodeDecode(config, copy);
