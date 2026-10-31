@@ -667,6 +667,14 @@ D878UVTest::testSettingsAudioPowerSave() {
   config.settings()->anytoneExtension()->audioSettings()->setVOXSource(
         AnytoneAudioSettingsExtension::VoxSource::Both);
 
+  // VOX delay is encoded as 500ms + 100ms per step
+  D878UVCodeplug codeplug;
+  ErrorStack err;
+  Codeplug::Flags flags; flags.setUpdateCodeplug(false);
+  if (! codeplug.encode(&config, flags, err))
+    QFAIL(QString("Cannot encode codeplug for AnyTone AT-D878UV: %1").arg(err.format()).toStdString().c_str());
+  QCOMPARE(codeplug.data(0x02500000)[0x0d], (unsigned char)6);
+
   encodeDecode(config, decoded);
 
   // Levels are quantized to the radio's ranges: VOX 1-3, volume 0-8

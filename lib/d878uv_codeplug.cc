@@ -1044,6 +1044,16 @@ D878UVCodeplug::GeneralSettingsElement::setTransmitTimeout(const Interval &tot) 
   setUInt8(Offset::transmitTimeout(), tot.seconds()/30);
 }
 
+Interval
+D878UVCodeplug::GeneralSettingsElement::voxDelay() const {
+  return Interval::fromMilliseconds(500 + 100*((unsigned)getUInt8(Offset::voxDelay())));
+}
+void
+D878UVCodeplug::GeneralSettingsElement::setVOXDelay(Interval intv) {
+  unsigned long long ms = std::min(std::max(500ULL, intv.milliseconds()), 500ULL+255*100);
+  setUInt8(Offset::voxDelay(), (ms-500)/100);
+}
+
 AnytoneDisplaySettingsExtension::Language
 D878UVCodeplug::GeneralSettingsElement::language() const {
   return (AnytoneDisplaySettingsExtension::Language)getUInt8(Offset::language());
