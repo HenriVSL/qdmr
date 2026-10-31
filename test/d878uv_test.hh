@@ -49,6 +49,7 @@ private slots:
   void testGPSTimeZoneFallback();
   void testSettingsAudioPowerSave();
   void testGPSTimeZoneByOffset();
+  void testRXBacklightDuration();
 protected:
   Config _micGainConfig;
   QTextStream _stderr;
