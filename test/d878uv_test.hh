@@ -53,6 +53,7 @@ private slots:
   void testAPRSPeriodOff();
   void testMelodyDuration();
   void testChannelNoContact();
+  void testAPRSChannelTone();
 protected:
   Config _micGainConfig;
   QTextStream _stderr;
